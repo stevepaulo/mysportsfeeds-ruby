@@ -50,4 +50,4 @@ Get full game schedule for the MLB 2016 playoff season, in CSV format
 data = msf.msf_get_data('mlb', '2016-playoff', 'full_game_schedule', 'csv')
 ```
 
-That's it!  Returned data is also stored locally under "results/" by default, in appropriately named files.
+That's it!

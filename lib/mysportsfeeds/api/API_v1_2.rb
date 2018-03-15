@@ -12,7 +12,7 @@ module Mysportsfeeds
         class API_v1_2
 
             # Constructor
-            def initialize(verbose, store_type=nil, store_location=nil)
+            def initialize(verbose)
                 @base_uri = URI("https://api.mysportsfeeds.com/v1.2/pull")
                 @headers = {
                     "Accept-Encoding" => "gzip",
@@ -20,8 +20,6 @@ module Mysportsfeeds
                 }
 
                 @verbose = verbose
-                @store_type = store_type
-                @store_location = store_location
 
                 @valid_feeds = [
                     'current_season',
@@ -98,58 +96,6 @@ module Mysportsfeeds
                 return url
             end
 
-            # Generate the appropriate filename for a feed request
-            def __make_output_filename(league, season, feed, output_format, params)
-                filename = "#{feed}-#{league.downcase}-#{season}"
-
-                if params.key?("gameid")
-                    filename << "-" << params["gameid"]
-                end
-
-                if params.key?("fordate")
-                    filename << "-" << params["fordate"]
-                end
-
-                filename << "." << output_format
-
-                return filename
-            end
-
-            # Save a feed response based on the store_type
-            def __save_feed(response, league, season, feed, output_format, params)
-                # Save to memory regardless of selected method
-                if output_format == "json"
-                    store_output = JSON.parse(response)
-                elsif output_format == "xml"
-                    store_output = response
-                elsif output_format == "csv"
-                    store_output = response
-                end
-
-                if @store_type == "file"
-                    if !File.exist?(@store_location)
-                        FileUtils::mkdir_p(@store_location)
-                    end
-
-                    filename = __make_output_filename(league, season, feed, output_format, params)
-
-                    outfile = File.open(@store_location + filename, "w")
-                    if output_format == "json"  # This is JSON
-                        json_out = response.to_json.gsub('\\', '').strip
-                        outfile.write(json_out[1..json_out.size-2])
-
-                    elsif output_format == "xml"  # This is xml
-                        outfile.write(store_output)
-
-                    elsif output_format == "csv"  # This is csv
-                        outfile.write(store_output)
-
-                    else
-                        raise Exception.new("Could not interpret feed output format")
-                    end
-                end
-            end
-
             # Indicate this version does support BASIC auth
             def supports_basic_auth()
                 return true
@@ -212,10 +158,6 @@ module Mysportsfeeds
                 end
 
                 if r.code == "200"
-                    if @store_type != nil
-                        __save_feed(r.body, league, season, feed, output_format, params)
-                    end
-
                     if output_format == "json"
                         data = JSON.parse(r.body)
                     elsif output_format == "xml"
@@ -223,23 +165,10 @@ module Mysportsfeeds
                     else
                         data = r.body
                     end
-
                 elsif r.code == "304"
                     if @verbose
                         puts "Data hasn't changed since last call"
                     end
-
-                    filename = __make_output_filename(league, season, feed, output_format, params)
-
-                    f = File.read(@store_location + filename)
-                    if output_format == "json"
-                        data = JSON.parse(f)
-                    elsif output_format == "xml"
-                        data = f
-                    else
-                        data = f
-                    end
-
                 else
                     puts "API call failed with error: #{r.code}"
                 end
