@@ -6,23 +6,20 @@ require "mysportsfeeds/api/API_v1_2"
 class MySportsFeeds
 
     # Constructor
-    def initialize(version='1.0', verbose=False, store_type='file', store_location='results/')
+    def initialize(version='1.0', verbose=False)
         __verify_version(version)
-        __verify_store(store_type, store_location)
 
         @version = version
         @verbose = verbose
-        @store_type = store_type
-        @store_location = store_location
 
         # Instantiate an instance of the appropriate API depending on version
         case @version
         when '1.0'
-            @api_instance = Mysportsfeeds::Api::API_v1_0.new(@verbose, @store_type, @store_location)
+            @api_instance = Mysportsfeeds::Api::API_v1_0.new(@verbose)
         when '1.1'
-            @api_instance = Mysportsfeeds::Api::API_v1_1.new(@verbose, @store_type, @store_location)
+            @api_instance = Mysportsfeeds::Api::API_v1_1.new(@verbose)
         when '1.2'
-            @api_instance = Mysportsfeeds::Api::API_v1_2.new(@verbose, @store_type, @store_location)
+            @api_instance = Mysportsfeeds::Api::API_v1_2.new(@verbose)
         else
             raise Exception.new("Unrecognized version specified.  Supported versions are: '1.0', '1.1', '1.2'")
         end
@@ -32,19 +29,6 @@ class MySportsFeeds
     def __verify_version(version)
         unless %w{1.0 1.1 1.2}.include?(version)
             raise Exception.new("Unrecognized version specified.  Supported versions are: '1.0', '1.1', '1.2'")
-        end
-    end
-
-    # Verify the type and location of the stored data
-    def __verify_store(store_type, store_location)
-        if !store_type.nil? and store_type != 'file'
-            raiseException.new("Unrecognized storage type specified.  Supported values are: nil,'file'")
-        end
-
-        if store_type == 'file'
-            if store_location.nil?
-                raise Exception.new("Must specify a location for stored data.")
-        	end
         end
     end
 
